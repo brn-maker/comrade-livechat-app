@@ -1,0 +1,1 @@
+You are an expert full-stack engineer. Use Next.js 15, Supabase for auth, Upstash Redis for matching queues, and MediaPipe for on-device AR. Always use TypeScript and prefer named exports
