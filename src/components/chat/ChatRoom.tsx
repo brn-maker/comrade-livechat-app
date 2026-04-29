@@ -273,7 +273,13 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
     <div className="flex h-screen flex-col bg-stone-950 text-white overflow-hidden">
       {/* ── Top Ad Banner (728x90) ────────────────────────────────────── */}
       <div className="hidden sm:flex h-[80px] sm:h-[120px] shrink-0 items-center justify-center border-b border-white/5 bg-stone-900/20 px-4 sm:px-6">
-        <AdSlot width={728} height={90} label="Top Banner" />
+        <AdSlot 
+          width={728} 
+          height={90} 
+          label="Top Banner" 
+          adDomain="www.highperformanceformat.com" 
+          adKey="424a78ff12fb52d9b3b607082a82e0da" 
+        />
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -449,7 +455,13 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">Sponsored</p>
           </div>
           
-          <AdSlot width={300} height={250} label="Sidebar Ad" />
+          <AdSlot 
+            width={300} 
+            height={250} 
+            label="Sidebar Ad" 
+            adDomain="www.highperformanceformat.com" 
+            adKey="9f48332788889fe28990df7941804ce7" 
+          />
 
           {/* Premium Upsell Card */}
           <div className="w-full relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 p-6 border border-white/10">
