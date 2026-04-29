@@ -279,104 +279,106 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
       <div className="flex flex-1 overflow-hidden">
         {/* ── Main Chat Area ─────────────────────────────────────────── */}
         <main className="relative flex flex-1 flex-col p-3 sm:p-6">
-          <div className="relative flex-1 overflow-hidden rounded-2xl sm:rounded-[2.5rem] border border-white/10 bg-black shadow-2xl">
-            {/* Remote video (large, full grid coverage) */}
-            <video
-              ref={remoteVideoRef}
-              id="remote-video"
-              autoPlay
-              playsInline
-              className="h-full w-full object-cover"
-            />
+          <div className="relative flex-1 overflow-hidden rounded-2xl sm:rounded-[2.5rem] border border-white/10 bg-black shadow-2xl flex flex-col md:flex-row">
+            {/* ── Top/Left: Remote Video & Status ── */}
+            <div className="relative flex-1 bg-stone-900 border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
+              <video
+                ref={remoteVideoRef}
+                id="remote-video"
+                autoPlay
+                playsInline
+                className="h-full w-full object-cover"
+              />
 
-            {/* Status overlay */}
-            {status !== "connected" && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-6 bg-black/80 backdrop-blur-md">
-                {status === "idle" && (
-                  <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-500">
-                    <div className="relative">
-                      <div className="absolute inset-0 animate-pulse rounded-full bg-violet-500/20 blur-2xl" />
-                      <div className="relative rounded-full bg-white/5 p-8 border border-white/10 shadow-2xl">
-                        <svg className="h-12 w-12 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
-                        </svg>
+              {/* Status overlay (only covers remote half) */}
+              {status !== "connected" && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-6 bg-black/80 backdrop-blur-md p-4 text-center">
+                  {status === "idle" && (
+                    <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-500">
+                      <div className="relative">
+                        <div className="absolute inset-0 animate-pulse rounded-full bg-violet-500/20 blur-2xl" />
+                        <div className="relative rounded-full bg-white/5 p-8 border border-white/10 shadow-2xl">
+                          <svg className="h-12 w-12 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-center">
-                      <h2 className="text-2xl font-bold tracking-tight text-white/90">Comrade Chat</h2>
-                      <p className="mt-2 text-sm font-medium text-white/40">Ready to meet someone new?</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={startSearch}
-                      disabled={arLoading}
-                      className="group relative flex items-center gap-3 rounded-full bg-violet-600 px-10 py-4 text-base font-bold text-white shadow-[0_0_40px_rgba(139,92,246,0.3)] transition-all hover:bg-violet-500 hover:scale-105 active:scale-95 disabled:opacity-50"
-                    >
-                      <span>{arLoading ? "Loading AR…" : "Start Matching"}</span>
-                      <svg className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-
-                {status === "searching" && (
-                  <div className="flex flex-col items-center gap-6">
-                    <div className="relative flex h-24 w-24 items-center justify-center">
-                      <div className="absolute inset-0 animate-ping rounded-full bg-violet-500/20" />
-                      <div className="absolute inset-2 animate-ping rounded-full bg-violet-500/30 font-bold" style={{ animationDelay: '0.2s' }} />
-                      <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/20 border border-violet-500/40">
-                        <svg className="h-8 w-8 animate-spin text-violet-300" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
+                      <div className="text-center">
+                        <h2 className="text-2xl font-bold tracking-tight text-white/90">Comrade Chat</h2>
+                        <p className="mt-2 text-sm font-medium text-white/40">Ready to meet someone new?</p>
                       </div>
-                    </div>
-                    <p className="text-xl font-semibold text-white/80 animate-pulse">Finding your match…</p>
-                    <button
-                      type="button"
-                      onClick={endCall}
-                      className="px-6 py-2 text-sm font-medium text-white/30 hover:text-white/60 transition"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-
-                {status === "disconnected" && (
-                    <div className="flex flex-col items-center gap-6">
-                      <div className="rounded-full bg-red-500/10 p-8 border border-red-500/20">
-                        <svg className="h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
-                        </svg>
-                      </div>
-                      <p className="text-lg font-medium text-white/60">Partner disconnected</p>
                       <button
                         type="button"
-                        onClick={nextMatch}
-                        className="rounded-full bg-violet-600 px-10 py-4 text-base font-bold text-white shadow-lg transition-all hover:bg-violet-500 active:scale-95"
+                        onClick={startSearch}
+                        disabled={arLoading}
+                        className="group relative flex items-center gap-3 rounded-full bg-violet-600 px-8 py-3 sm:px-10 sm:py-4 text-sm sm:text-base font-bold text-white shadow-[0_0_40px_rgba(139,92,246,0.3)] transition-all hover:bg-violet-500 hover:scale-105 active:scale-95 disabled:opacity-50"
                       >
-                        Find Next Match
+                        <span>{arLoading ? "Loading AR…" : "Start Matching"}</span>
+                        <svg className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                        </svg>
                       </button>
                     </div>
-                )}
-              </div>
-            )}
+                  )}
 
-            {/* Local PiP (top-right) */}
-            <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-20 w-32 sm:w-48 aspect-video overflow-hidden rounded-xl sm:rounded-2xl border-2 border-white/20 shadow-2xl shadow-black/80 ring-1 ring-black/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer group">
+                  {status === "searching" && (
+                    <div className="flex flex-col items-center gap-6">
+                      <div className="relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center">
+                        <div className="absolute inset-0 animate-ping rounded-full bg-violet-500/20" />
+                        <div className="absolute inset-2 animate-ping rounded-full bg-violet-500/30 font-bold" style={{ animationDelay: '0.2s' }} />
+                        <div className="relative flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-violet-500/20 border border-violet-500/40">
+                          <svg className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-violet-300" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <p className="text-lg sm:text-xl font-semibold text-white/80 animate-pulse">Finding your match…</p>
+                      <button
+                        type="button"
+                        onClick={endCall}
+                        className="px-6 py-2 text-sm font-medium text-white/30 hover:text-white/60 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {status === "disconnected" && (
+                      <div className="flex flex-col items-center gap-6">
+                        <div className="rounded-full bg-red-500/10 p-6 sm:p-8 border border-red-500/20">
+                          <svg className="h-10 w-10 sm:h-12 sm:w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                          </svg>
+                        </div>
+                        <p className="text-base sm:text-lg font-medium text-white/60">Partner disconnected</p>
+                        <button
+                          type="button"
+                          onClick={nextMatch}
+                          className="rounded-full bg-violet-600 px-8 py-3 sm:px-10 sm:py-4 text-sm sm:text-base font-bold text-white shadow-lg transition-all hover:bg-violet-500 active:scale-95"
+                        >
+                          Find Next Match
+                        </button>
+                      </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* ── Bottom/Right: Local Video ── */}
+            <div className="relative flex-1 bg-stone-900 overflow-hidden">
               <video
                 ref={localVideoRef}
                 id="local-video"
                 autoPlay
                 playsInline
                 muted
-                className="h-full w-full object-cover grayscale-[0.2] transition-all group-hover:grayscale-0"
+                className="h-full w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-              <div className="absolute bottom-1 left-2 sm:bottom-2 sm:left-3 flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                <div className="h-1 w-1 sm:h-1.5 sm:w-1.5 animate-pulse rounded-full bg-green-500" />
-                <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-white drop-shadow-md">Live</span>
+              <div className="absolute top-3 right-3 sm:top-6 sm:right-6 flex items-center gap-2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 z-20">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-white">You</span>
               </div>
             </div>
 
