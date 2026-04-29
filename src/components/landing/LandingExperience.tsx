@@ -132,6 +132,20 @@ export function LandingExperience() {
           password,
         });
         if (signInError) throw signInError;
+
+        // Check if returning user already has a profile
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: existingProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", user.id)
+            .maybeSingle();
+          if (existingProfile) {
+            router.push("/chat");
+            return;
+          }
+        }
         setStep("declare");
       }
     } catch (e) {
