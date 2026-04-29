@@ -363,8 +363,8 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
               </div>
             )}
 
-            {/* Local PiP (bottom-right) */}
-            <div className="absolute bottom-3 right-3 sm:bottom-6 sm:right-6 z-20 w-32 sm:w-48 aspect-video overflow-hidden rounded-xl sm:rounded-2xl border-2 border-white/20 shadow-2xl shadow-black/80 ring-1 ring-black/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer group">
+            {/* Local PiP (top-right) */}
+            <div className="absolute top-3 right-3 sm:top-6 sm:right-6 z-20 w-32 sm:w-48 aspect-video overflow-hidden rounded-xl sm:rounded-2xl border-2 border-white/20 shadow-2xl shadow-black/80 ring-1 ring-black/50 transition-transform hover:scale-105 active:scale-95 cursor-pointer group">
               <video
                 ref={localVideoRef}
                 id="local-video"
