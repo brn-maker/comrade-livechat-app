@@ -42,6 +42,7 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
   const [status, setStatus] = useState<ChatStatus>("idle");
   const [matchInfo, setMatchInfo] = useState<MatchPayload | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(true);
   const [authToken, setAuthToken] = useState<string | null>(null);
   
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
@@ -66,6 +67,11 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
     
     return () => window.removeEventListener("resize", checkMobile);
   }, [supabase]);
+
+  // Auto-collapse filters on mobile for less obstruction
+  useEffect(() => {
+    setFiltersOpen(!isMobile);
+  }, [isMobile]);
 
   const {
     stream: localStream,
@@ -390,23 +396,39 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
 
             {/* Controls Bar (Floating) */}
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3 bg-stone-900/80 backdrop-blur-2xl rounded-xl sm:rounded-2xl border border-white/10 shadow-2xl animate-in slide-in-from-bottom-8 duration-500">
-               {/* Filter Carousel */}
-              <div className="flex items-center gap-1 sm:gap-2 pr-2 sm:pr-4 border-r border-white/10 max-w-[200px] sm:max-w-[300px] overflow-x-auto scrollbar-none">
-                {FILTER_LIST.map((f) => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => setFilter(f.id)}
-                    className={`shrink-0 rounded-lg sm:rounded-xl px-2 sm:px-4 py-1 sm:py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${
-                      activeFilter === f.id
-                        ? "bg-violet-600 text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] ring-1 ring-white/20"
-                        : "bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+              {/* Filter Toggle */}
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen((v) => !v)}
+                  aria-expanded={filtersOpen}
+                  className="flex items-center justify-center h-9 w-9 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 transition"
+                >
+                  <svg className={`h-4 w-4 transition-transform ${filtersOpen ? "rotate-0" : "-rotate-90"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M3 12h18M3 17h18" />
+                  </svg>
+                </button>
               </div>
+
+              {/* Filter Carousel (collapsible) */}
+              {filtersOpen && (
+                <div className="flex items-center gap-1 sm:gap-2 pr-2 sm:pr-4 border-r border-white/10 max-w-[200px] sm:max-w-[300px] overflow-x-auto scrollbar-none">
+                  {FILTER_LIST.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setFilter(f.id)}
+                      className={`shrink-0 rounded-lg sm:rounded-xl px-2 sm:px-4 py-1 sm:py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${
+                        activeFilter === f.id
+                          ? "bg-violet-600 text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] ring-1 ring-white/20"
+                          : "bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
                <button
                 type="button"

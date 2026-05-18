@@ -38,29 +38,38 @@ export function AdSlot({
 
     // Clear previous contents to prevent duplicates during React strict-mode re-renders
     containerRef.current.innerHTML = "";
+    try {
+      // 1. Create the configuration script
+      const confScript = document.createElement("script");
+      confScript.type = "text/javascript";
+      confScript.text = `atOptions = { 'key': '${adKey}', 'format': 'iframe', 'height': ${height}, 'width': ${width}, 'params': {} };`;
 
-    // 1. Create the configuration script
-    const confScript = document.createElement("script");
-    confScript.type = "text/javascript";
-    confScript.innerHTML = `
-      atOptions = {
-        'key' : '${adKey}',
-        'format' : 'iframe',
-        'height' : ${height},
-        'width' : ${width},
-        'params' : {}
+      // 2. Create the invocation script (use explicit https to avoid protocol issues)
+      const invokeScript = document.createElement("script");
+      invokeScript.type = "text/javascript";
+      invokeScript.src = `https://${adDomain}/invoke.js`;
+      invokeScript.async = true;
+
+      // Attach load/error handlers for debugging
+      invokeScript.onload = () => {
+        console.log("[AdSlot] ad script loaded", { adKey, adDomain, width, height });
       };
-    `;
+      invokeScript.onerror = (e) => {
+        console.error("[AdSlot] ad script failed to load", { adKey, adDomain, width, height, e });
+        if (containerRef.current) {
+          const errEl = document.createElement("div");
+          errEl.style.cssText = "color:#f8f8f2;background:#7f1d1d;padding:6px;border-radius:8px;font-size:12px;text-align:center";
+          errEl.textContent = "Ad failed to load";
+          containerRef.current.appendChild(errEl);
+        }
+      };
 
-    // 2. Create the invocation script
-    const invokeScript = document.createElement("script");
-    invokeScript.type = "text/javascript";
-    invokeScript.src = `//${adDomain}/invoke.js`;
-    invokeScript.async = true;
-
-    // Append both to our container
-    containerRef.current.appendChild(confScript);
-    containerRef.current.appendChild(invokeScript);
+      // Append both to our container
+      containerRef.current.appendChild(confScript);
+      containerRef.current.appendChild(invokeScript);
+    } catch (err) {
+      console.error("[AdSlot] injection error:", err);
+    }
   }, [adKey, width, height, adDomain]);
 
   // If we don't have an adKey, show the placeholder
