@@ -18,7 +18,12 @@ export const metadata: Metadata = {
   title: "Comrade — matched live video",
   description:
     "Live video chat with preferences that matter. Try as a guest in seconds.",
-  viewport: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({

@@ -13,7 +13,6 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 
 type Step = "closed" | "auth" | "declare";
-type AuthMode = "login" | "signup" | "forgot";
 
 const minBirthYear = 1900;
 
@@ -26,11 +25,9 @@ export function LandingExperience() {
   const [error, setError] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [authMode, setAuthMode] = useState<AuthMode>("login");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [resetEmailSent, setResetEmailSent] = useState(false);
   const [declaredGender, setDeclaredGender] = useState<
     "male" | "female" | "other" | ""
   >("");
@@ -46,16 +43,31 @@ export function LandingExperience() {
   }, []);
 
   const redirectIfComplete = useCallback(async () => {
-    // Use getUser() to validate JWT with Supabase servers (more secure than getSession)
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // First try getSession, then fall back to getUser for OAuth redirects
+    let { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      // For OAuth redirects, the session might be in the URL hash
+      // getUser() will exchange the code for a session
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        setCheckingSession(false);
+        return;
+      }
+      // If we have a user but no session, wait a moment for the session to be established
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const { data: { session: newSession } } = await supabase.auth.getSession();
+      session = newSession;
+    }
+    
+    if (!session?.user) {
       setCheckingSession(false);
       return;
     }
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id")
-      .eq("id", user.id)
+      .eq("id", session.user.id)
       .maybeSingle();
     if (profileError) {
       console.error(profileError);
@@ -94,24 +106,20 @@ export function LandingExperience() {
     return () => document.removeEventListener("keydown", onKey);
   }, [step]);
 
-  const openModal = () => {
+  const openModal = (signUp: boolean = false) => {
     setError(null);
     setEmail("");
     setPassword("");
-    setIsSignUp(false);
-    setAuthMode("login");
-    setResetEmailSent(false);
+    setIsSignUp(signUp);
     setStep("auth");
   };
 
   const closeModal = () => {
     setError(null);
-    setAuthMode("login");
-    setResetEmailSent(false);
     setStep("closed");
   };
 
-  const handleAuth = async (e: React.FormEvent) => {
+    const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -120,11 +128,32 @@ export function LandingExperience() {
         throw new Error("Please enter email and password.");
       }
       if (isSignUp) {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
         });
         if (signUpError) throw signUpError;
+        
+        // If we got a session directly from sign up, use it
+        if (data?.session) {
+          setStep("declare");
+          return;
+        }
+        
+        // Check if user needs to confirm email
+        if (data?.user) {
+          // User created but needs email confirmation
+          setError("Please check your email to confirm your account before continuing.");
+          setLoading(false);
+          return;
+        }
+        
+        // Otherwise wait for session to be established
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session?.user) {
+          throw new Error("Session not established after sign up. Please check your email for confirmation link.");
+        }
         setStep("declare");
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -132,45 +161,41 @@ export function LandingExperience() {
           password,
         });
         if (signInError) throw signInError;
-
-        // Check if returning user already has a profile
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: existingProfile } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("id", user.id)
-            .maybeSingle();
-          if (existingProfile) {
-            router.push("/chat");
-            return;
-          }
-        }
+        // Wait for session to be established after sign in
+        await new Promise(resolve => setTimeout(resolve, 800));
         setStep("declare");
       }
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Authentication failed.";
-      setError(message);
+    } catch (e: any) {
+      // Handle rate limit errors specifically
+      const isRateLimit = e.status === 429 || 
+                         e.message?.includes("Too Many Requests") ||
+                         e.message?.includes("rate limit") ||
+                         e.message?.includes("too many requests");
+      
+      if (isRateLimit) {
+        setError("Too many requests. Please wait a few moments before trying again. For faster access, try Google Sign In.");
+      } else {
+        const message = e instanceof Error ? e.message : "Authentication failed.";
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleSignIn = async () => {
     setError(null);
     setLoading(true);
     try {
-      if (!email) {
-        throw new Error("Please enter your email address.");
-      }
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
       });
       if (error) throw error;
-      setResetEmailSent(true);
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Failed to send reset email.";
+      const message = e instanceof Error ? e.message : "Google sign-in failed.";
       setError(message);
     } finally {
       setLoading(false);
@@ -190,9 +215,10 @@ export function LandingExperience() {
       return;
     }
 
-    // Use getUser() to validate JWT with Supabase servers (more secure than getSession)
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user) {
       setError("Session expired. Please sign in again.");
       setStep("auth");
       return;
@@ -202,7 +228,7 @@ export function LandingExperience() {
     try {
       const { error: upsertError } = await supabase.from("profiles").upsert(
         {
-          id: user.id,
+          id: session.user.id,
           gender: declaredGender,
           birth_year: year,
           seeking: seeking,
@@ -244,7 +270,7 @@ export function LandingExperience() {
           </span>
           <button
             type="button"
-            onClick={openModal}
+            onClick={() => openModal(false)}
             className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-stone-200 backdrop-blur transition hover:bg-white/10"
           >
             Sign in
@@ -271,7 +297,7 @@ export function LandingExperience() {
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
               <button
                 type="button"
-                onClick={openModal}
+                onClick={() => openModal(true)}
                 className="inline-flex h-12 items-center justify-center rounded-full bg-violet-500 px-8 text-base font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:bg-violet-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0c0a09]"
               >
                 Get started free
@@ -321,7 +347,7 @@ export function LandingExperience() {
               </svg>
             </button>
 
-            {step === "auth" && authMode !== "forgot" && (
+            {step === "auth" && (
               <form onSubmit={handleAuth} className="pt-2">
                 <h2
                   id={titleId}
@@ -339,6 +365,36 @@ export function LandingExperience() {
                     {error}
                   </p>
                 )}
+
+                {/* Google Sign-In Button */}
+                <div className="mt-6">
+                  <button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10 disabled:opacity-60"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 24 24">
+                      <path
+                        fill="currentColor"
+                        d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
+                      />
+                    </svg>
+                    Continue with Google
+                  </button>
+                </div>
+
+                {/* Divider */}
+                <div className="relative mt-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/10" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="bg-[#1c1917] px-2 text-stone-500">or</span>
+                  </div>
+                </div>
+
+                {/* Email/Password Form */}
                 <div className="mt-6 space-y-4">
                   <div>
                     <label
@@ -371,101 +427,17 @@ export function LandingExperience() {
                 >
                   {loading ? "Loading…" : isSignUp ? "Create account" : "Sign in"}
                 </button>
-                <div className="mt-4 space-y-3">
-                  <p className="text-center text-sm text-stone-400">
-                    {isSignUp ? "Already have an account? " : "Don't have an account? "}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsSignUp(!isSignUp);
-                        setError(null);
-                      }}
-                      className="text-violet-300 hover:text-violet-200"
-                    >
-                      {isSignUp ? "Sign in" : "Sign up"}
-                    </button>
-                  </p>
-                  {!isSignUp && (
-                    <p className="text-center text-sm text-stone-400">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAuthMode("forgot");
-                          setError(null);
-                          setEmail("");
-                        }}
-                        className="text-violet-300 hover:text-violet-200"
-                      >
-                        Forgot password?
-                      </button>
-                    </p>
-                  )}
-                </div>
-              </form>
-            )}
-
-            {step === "auth" && authMode === "forgot" && (
-              <form onSubmit={handleForgotPassword} className="pt-2">
-                <h2
-                  id={titleId}
-                  className="text-xl font-semibold tracking-tight text-white"
-                >
-                  Reset password
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-stone-400">
-                  Enter your email and we'll send you a link to reset your password.
-                </p>
-                {error && (
-                  <p className="mt-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">
-                    {error}
-                  </p>
-                )}
-                {resetEmailSent ? (
-                  <div className="mt-6 rounded-lg bg-green-500/10 px-4 py-3 text-sm text-green-300">
-                    <p className="font-medium">Check your email!</p>
-                    <p className="mt-2">We sent a password reset link to {email}</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="mt-6 space-y-4">
-                      <div>
-                        <label
-                          htmlFor="reset-email"
-                          className="block text-sm font-medium text-stone-300"
-                        >
-                          Email
-                        </label>
-                        <input
-                          id="reset-email"
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="mt-1.5 w-full rounded-xl border border-white/10 bg-stone-900 px-3 py-2.5 text-sm text-white outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/40"
-                        />
-                      </div>
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-violet-500 text-sm font-semibold text-white transition hover:bg-violet-400 disabled:opacity-60"
-                    >
-                      {loading ? "Sending…" : "Send reset link"}
-                    </button>
-                  </>
-                )}
                 <p className="mt-4 text-center text-sm text-stone-400">
+                  {isSignUp ? "Already have an account? " : "Don't have an account? "}
                   <button
                     type="button"
                     onClick={() => {
-                      setAuthMode("login");
+                      setIsSignUp(!isSignUp);
                       setError(null);
-                      setEmail("");
-                      setResetEmailSent(false);
                     }}
                     className="text-violet-300 hover:text-violet-200"
                   >
-                    Back to sign in
+                    {isSignUp ? "Sign in" : "Sign up"}
                   </button>
                 </p>
               </form>

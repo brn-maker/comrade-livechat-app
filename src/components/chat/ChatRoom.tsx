@@ -7,6 +7,7 @@ import {
   useState,
   useMemo,
 } from "react";
+import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socket";
 import { useARStream } from "@/hooks/useARStream";
 import { FILTER_LIST } from "@/lib/ar/filters";
@@ -39,6 +40,7 @@ const ICE_SERVERS: RTCIceServer[] = [
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<ChatStatus>("idle");
   const [matchInfo, setMatchInfo] = useState<MatchPayload | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -273,6 +275,11 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
     socket.emit("leave_matching");
   }, [closePeer]);
 
+  const handleLogout = useCallback(async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+  }, [supabase, router]);
+
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
@@ -291,6 +298,21 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
       <div className="flex flex-1 overflow-hidden">
         {/* ── Main Chat Area ─────────────────────────────────────────── */}
         <main className="relative flex flex-1 flex-col p-3 sm:p-6">
+          {/* Logout Button - Small, top-right, doesn't interfere with ads or video */}
+          <div className="absolute top-0 right-0 z-40 mb-2">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/40 backdrop-blur-md px-3 py-1.5 text-xs font-medium text-white/60 transition hover:bg-black/60 hover:text-white"
+              title="Sign out"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+              </svg>
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
+          </div>
+
           <div className="relative flex-1 overflow-hidden rounded-2xl sm:rounded-[2.5rem] border border-white/10 bg-black shadow-2xl flex flex-col md:flex-row">
             {/* ── Top/Left: Remote Video & Status ── */}
             <div className="relative flex-1 bg-stone-900 border-b md:border-b-0 md:border-r border-white/10 overflow-hidden">
