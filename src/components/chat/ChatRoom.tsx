@@ -14,6 +14,8 @@ import { FILTER_LIST } from "@/lib/ar/filters";
 import { AdSlot } from "./AdSlot";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
+const ADSTERRA_KEY = process.env.NEXT_PUBLIC_ADSTERRA_KEY || "";
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type ChatStatus = "idle" | "searching" | "connected" | "disconnected";
@@ -284,14 +286,25 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
 
   return (
     <div className="flex h-screen flex-col bg-stone-950 text-white overflow-hidden">
-      {/* ── Top Ad Banner (728x90) ────────────────────────────────────── */}
+      {/* ── Top Ad Banner (728x90) - Hidden on mobile ──────────────────────── */}
       <div className="hidden sm:flex h-[80px] sm:h-[120px] shrink-0 items-center justify-center border-b border-white/5 bg-stone-900/20 px-4 sm:px-6">
         <AdSlot 
           width={728} 
           height={90} 
-          label="Top Banner" 
+          label="Advertisement"
           adDomain="www.highperformanceformat.com" 
-          adKey="424a78ff12fb52d9b3b607082a82e0da" 
+          adKey={ADSTERRA_KEY} 
+        />
+      </div>
+
+      {/* ── Mobile Ad Banner (320x50) - Visible on mobile only ─────────────── */}
+      <div className="flex sm:hidden h-[50px] shrink-0 items-center justify-center border-b border-white/5 bg-stone-900/20 px-4">
+        <AdSlot 
+          width={320} 
+          height={50} 
+          label="Advertisement"
+          adDomain="www.highperformanceformat.com" 
+          adKey={ADSTERRA_KEY} 
         />
       </div>
 
@@ -485,6 +498,16 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
           </div>
 
           <canvas ref={canvasRef} className="hidden" />
+          {/* Mobile Ad Banner - Visible below video on mobile */}
+          <div className="flex sm:hidden h-[50px] shrink-0 items-center justify-center border-t border-white/5 bg-stone-900/30 px-4">
+            <AdSlot 
+              width={320} 
+              height={50} 
+              label="Advertisement"
+              adDomain="www.highperformanceformat.com" 
+              adKey={ADSTERRA_KEY} 
+            />
+          </div>
           {arError && (
             <div className="absolute left-10 top-10 z-50 rounded-2xl bg-red-500/90 px-4 py-3 text-xs font-bold text-white shadow-2xl backdrop-blur-xl border border-white/20">
               Camera Error: {arError.message}
@@ -492,8 +515,8 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
           )}
         </main>
 
-        {/* ── Sidebar (300x250 Ad Slot) ─────────────────────────────────── */}
-        <aside className="hidden lg:flex w-full lg:w-[380px] shrink-0 flex-col items-center gap-8 border-l border-white/5 bg-stone-900/10 p-8">
+        {/* ── Sidebar (300x250 Ad Slot) - Hidden on mobile ─────────────────── */}
+        <aside className="hidden md:flex w-full md:w-[320px] shrink-0 flex-col items-center gap-6 border-l border-white/5 bg-stone-900/10 p-6">
           <div className="flex flex-col items-center gap-2">
              <div className="h-px w-12 bg-violet-500/50" />
              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">Sponsored</p>
@@ -502,9 +525,9 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
           <AdSlot 
             width={300} 
             height={250} 
-            label="Sidebar Ad" 
-            adDomain="www.highperformanceformat.com" 
-            adKey="9f48332788889fe28990df7941804ce7" 
+            label="Advertisement"
+            adDomain="www.highperformanceformat.com"
+            adKey={ADSTERRA_KEY} 
           />
 
           {/* Premium Upsell Card */}
