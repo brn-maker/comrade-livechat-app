@@ -14,8 +14,6 @@ import { FILTER_LIST } from "@/lib/ar/filters";
 import { AdSlot } from "./AdSlot";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
-const ADSTERRA_KEY = process.env.NEXT_PUBLIC_ADSTERRA_KEY || "";
-
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type ChatStatus = "idle" | "searching" | "connected" | "disconnected";
@@ -292,8 +290,8 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
           width={728} 
           height={90} 
           label="Advertisement"
-          adDomain="www.highperformanceformat.com" 
-          adKey={ADSTERRA_KEY} 
+          adDomain="poetrywishing.com"
+          adKey="424a78ff12fb52d9b3b607082a82e0da"
         />
       </div>
 
@@ -303,8 +301,8 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
           width={320} 
           height={50} 
           label="Advertisement"
-          adDomain="www.highperformanceformat.com" 
-          adKey={ADSTERRA_KEY} 
+          adDomain="poetrywishing.com"
+          adKey="c953e02f5f0e664f79775c8f80677edb"
         />
       </div>
 
@@ -504,8 +502,8 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
               width={320} 
               height={50} 
               label="Advertisement"
-              adDomain="www.highperformanceformat.com" 
-              adKey={ADSTERRA_KEY} 
+              adDomain="poetrywishing.com"
+              adKey="c953e02f5f0e664f79775c8f80677edb"
             />
           </div>
           {arError && (
@@ -526,8 +524,8 @@ export function ChatRoom({ userId, gender, seeking }: ChatRoomProps) {
             width={300} 
             height={250} 
             label="Advertisement"
-            adDomain="www.highperformanceformat.com"
-            adKey={ADSTERRA_KEY} 
+            adDomain="poetrywishing.com"
+            adKey="9f48332788889fe28990df7941804ce7"
           />
 
           {/* Premium Upsell Card */}

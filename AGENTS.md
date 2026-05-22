@@ -16,17 +16,14 @@ repository. Never hard-code it into source files.
 <!-- END:vercel-agent-rules -->
 
 <!-- BEGIN:adsterra-agent-rules -->
-# Adsterra Ad Key
+# Adsterra Ad Configuration
 
-The Adsterra publisher key for ad units is stored in `.env.local` as
-`NEXT_PUBLIC_ADSTERRA_KEY`.
+Adsterra ads are configured in `ChatRoom.tsx` with hardcoded keys and domain:
+- Domain: `poetrywishing.com`
+- 728×90 (desktop top): key `424a78ff12fb52d9b3b607082a82e0da`
+- 300×250 (sidebar): key `9f48332788889fe28990df7941804ce7`
+- 320×50 (mobile): key `c953e02f5f0e664f79775c8f80677edb`
 
-This key is used by the `AdSlot` component in `src/components/chat/ChatRoom.tsx`
-for all ad placements:
-- Top banner (728×90) - desktop/tablet
-- Mobile banner (320×50) - mobile only (above and below video)
-- Sidebar (300×250) - tablet/desktop
-
-Always reference `process.env.NEXT_PUBLIC_ADSTERRA_KEY` rather than hardcoding
-the ad key directly. Update this value in `.env.local` when changing ad networks.
+The `AdSlot` component dynamically injects Adsterra's invoke.js script.
+When no adKey is provided or the ad fails to load within 5 seconds, a placeholder is shown.
 <!-- END:adsterra-agent-rules -->
