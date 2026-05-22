@@ -48,12 +48,20 @@ export function AdSlot({
     containerRef.current.innerHTML = "";
 
     // Fall back to placeholder if the script hasn't populated the container
-    // within 5 seconds (e.g. network error or ad blocker).
+    // within 8 seconds (Adsterra can be slow to inject iframe)
     const timer = setTimeout(() => {
       if (containerRef.current && containerRef.current.innerHTML === "") {
+        console.log("[AdSlot] Timeout reached, showing placeholder");
         setShowPlaceholder(true);
+      } else if (containerRef.current) {
+        // Check if iframe was injected
+        const iframe = containerRef.current.querySelector("iframe");
+        if (!iframe) {
+          console.log("[AdSlot] No iframe found after timeout, showing placeholder");
+          setShowPlaceholder(true);
+        }
       }
-    }, 5000);
+    }, 8000);
 
     try {
       // 1. Configuration object expected by Adsterra's invoke.js
@@ -70,6 +78,14 @@ export function AdSlot({
       invokeScript.onload = () => {
         console.log("[AdSlot] ad script loaded", { adKey, adDomain, width, height });
         clearTimeout(timer);
+        // Give additional time for iframe to be written
+        setTimeout(() => {
+          const iframe = containerRef.current?.querySelector("iframe");
+          if (!iframe) {
+            console.log("[AdSlot] No iframe injected, showing placeholder");
+            setShowPlaceholder(true);
+          }
+        }, 3000);
       };
       invokeScript.onerror = (e) => {
         console.error("[AdSlot] ad script failed to load", { adKey, adDomain, width, height, e });
