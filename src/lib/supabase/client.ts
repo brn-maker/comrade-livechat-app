@@ -11,8 +11,9 @@ export function createBrowserSupabaseClient() {
     );
   }
   return createClient(url, anon, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     auth: {
       siteURL: typeof window !== "undefined" ? window.location.origin : undefined,
-    },
+    } as any,
   });
 }
