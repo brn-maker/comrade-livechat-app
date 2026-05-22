@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AdSlotProps {
   /** Width in pixels */
@@ -28,51 +28,12 @@ export function AdSlot({
   label = "Ad",
   className = "",
   adKey,
-  adDomain = "www.highperformanceformat.com", // Default, replace with the one they provide
+  adDomain = "www.highperformanceformat.com",
 }: AdSlotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [showPlaceholder, setShowPlaceholder] = useState(false);
 
-  useEffect(() => {
-    // If no adKey is provided, don't load the script
-    if (!adKey || !containerRef.current) return;
-
-    // Clear previous contents to prevent duplicates during React strict-mode re-renders
-    containerRef.current.innerHTML = "";
-    try {
-      // 1. Create the configuration script
-      const confScript = document.createElement("script");
-      confScript.type = "text/javascript";
-      confScript.text = `atOptions = { 'key': '${adKey}', 'format': 'iframe', 'height': ${height}, 'width': ${width}, 'params': {} };`;
-
-      // 2. Create the invocation script (use explicit https to avoid protocol issues)
-      const invokeScript = document.createElement("script");
-      invokeScript.type = "text/javascript";
-      invokeScript.src = `https://${adDomain}/invoke.js`;
-      invokeScript.async = true;
-
-      // Attach load/error handlers for debugging
-      invokeScript.onload = () => {
-        console.log("[AdSlot] ad script loaded", { adKey, adDomain, width, height });
-      };
-      invokeScript.onerror = (e) => {
-        console.error("[AdSlot] ad script failed to load", { adKey, adDomain, width, height, e });
-        if (containerRef.current) {
-          const errEl = document.createElement("div");
-          errEl.style.cssText = "color:#f8f8f2;background:#7f1d1d;padding:6px;border-radius:8px;font-size:12px;text-align:center";
-          errEl.textContent = "Ad failed to load";
-          containerRef.current.appendChild(errEl);
-        }
-      };
-
-      // Append both to our container
-      containerRef.current.appendChild(confScript);
-      containerRef.current.appendChild(invokeScript);
-    } catch (err) {
-      console.error("[AdSlot] injection error:", err);
-    }
-  }, [adKey, width, height, adDomain]);
-
-  // If we don't have an adKey, show the placeholder
+  // Show placeholder if no adKey
   if (!adKey) {
     return (
       <div
@@ -87,7 +48,64 @@ export function AdSlot({
     );
   }
 
-  // Return the container that the Adsterra script will inject the iframe into
+  useEffect(() => {
+    if (!adKey || !containerRef.current) return;
+
+    // Clear previous contents
+    containerRef.current.innerHTML = "";
+
+    // Timeout to show placeholder if ad fails to load
+    const timer = setTimeout(() => {
+      if (containerRef.current && containerRef.current.innerHTML === "") {
+        setShowPlaceholder(true);
+      }
+    }, 5000);
+
+    try {
+      // 1. Create the configuration script
+      const confScript = document.createElement("script");
+      confScript.type = "text/javascript";
+      confScript.text = `atOptions = { 'key': '${adKey}', 'format': 'iframe', 'height': ${height}, 'width': ${width}, 'params': {} };`;
+
+      // 2. Create the invocation script
+      const invokeScript = document.createElement("script");
+      invokeScript.type = "text/javascript";
+      invokeScript.src = `https://${adDomain}/invoke.js`;
+      invokeScript.async = true;
+
+      invokeScript.onload = () => {
+        console.log("[AdSlot] ad script loaded", { adKey, adDomain, width, height });
+      };
+      invokeScript.onerror = (e) => {
+        console.error("[AdSlot] ad script failed to load", { adKey, adDomain, width, height, e });
+        setShowPlaceholder(true);
+      };
+
+      // Append scripts
+      containerRef.current.appendChild(confScript);
+      containerRef.current.appendChild(invokeScript);
+    } catch (err) {
+      console.error("[AdSlot] injection error:", err);
+      setShowPlaceholder(true);
+    }
+
+    return () => clearTimeout(timer);
+  }, [adKey, width, height, adDomain]);
+
+  if (showPlaceholder) {
+    return (
+      <div
+        id={`ad-slot-${width}x${height}`}
+        className={`flex shrink-0 items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.02] ${className}`}
+        style={{ width, height }}
+      >
+        <span className="select-none text-xs font-medium tracking-wide text-white/20">
+          {label} · {width}×{height}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={containerRef}
