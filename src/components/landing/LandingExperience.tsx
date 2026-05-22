@@ -187,12 +187,12 @@ export function LandingExperience() {
     setError(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      });
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin,
+          },
+        });
       if (error) throw error;
     } catch (e) {
       const message = e instanceof Error ? e.message : "Google sign-in failed.";

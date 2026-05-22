@@ -10,5 +10,9 @@ export function createBrowserSupabaseClient() {
       "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY",
     );
   }
-  return createClient(url, anon);
+  return createClient(url, anon, {
+    auth: {
+      siteURL: typeof window !== "undefined" ? window.location.origin : undefined,
+    },
+  });
 }
